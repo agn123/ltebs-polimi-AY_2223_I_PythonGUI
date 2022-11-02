@@ -53,36 +53,38 @@ class MainWindow(QMainWindow):
         # Define buttons
         self.plus_btn = QPushButton(
             text="+1",
-            clicked=self.add_one
+            clicked=self.add_one #clicked è il segnale generato alla pressiome del pulsante, funzione non richiede tonde dopo, si passa soltanto segnale
         )
         # alternatively, signals can be connected in this way
-        # self.plus_btn.clicked.connect(self.add_one)
+        # self.plus_btn.clicked.connect(self.add_one) #in alternativa a riga 59 segnale clicked di quel bottone connettilo a self.add_one se vogliamo dare anche dati, ulteriori parametri in ingresso dobbiamo usare questa
         self.minus_btn = QPushButton(
             text="-1",
-            clicked=self.remove_one
+            clicked=self.remove_one 
         )
         # alternatively, signals can be connected in this way
         # self.plus_btn.clicked.connect(self.add_one)
         
         # Define lable to visualize numbers
         self.label_number = int(random.random()*100)
-        self.display_label = QLabel(
+        self.display_label = QLabel(    #definizione etichetta
             str(self.label_number),
             alignment=QtCore.Qt.AlignCenter
         )
 
-        # layout
-        button_hlay = QHBoxLayout()
+        # layout    mettere insieme gli oggetti che ho creato mettendoli in punti precisi, fatto a inscatolamenti layout verticali e orizzontali
+        button_hlay = QHBoxLayout() #layout orizzontale
         button_hlay.addWidget(self.plus_btn)
         button_hlay.addWidget(self.minus_btn)
-        vlay = QVBoxLayout()
+        vlay = QVBoxLayout()    #layout verticale
         vlay.addLayout(button_hlay)
         vlay.addWidget(self.display_label)
-        widget = QWidget()
+        widget = QWidget()  #widget vuoto a cui assegnare layout appena definito
         widget.setLayout(vlay)
         #.setCentralWidget is a QMainWindow specific function that 
         # allows you to set the widget that goes in the middle of the window.
-        self.setCentralWidget(widget)
+        self.setCentralWidget(widget)   #mettere widget creato come central widget
+
+    #definire funzioni che ho usato
 
     def add_one(self):
         """!
@@ -98,6 +100,7 @@ class MainWindow(QMainWindow):
         self.label_number = self.label_number-1
         self.display_label.setText(str(self.label_number))
 
+# abbiamo definito la classe, la struttura, dobbiamo crerare l'istanza e lanciarla
 
 #############
 #  RUN APP  #
