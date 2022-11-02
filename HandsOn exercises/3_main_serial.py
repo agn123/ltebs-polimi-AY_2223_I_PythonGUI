@@ -31,13 +31,13 @@ CONN_STATUS = False
 
 
 # Logging config
-logging.basicConfig(format="%(message)s", level=logging.INFO)
+logging.basicConfig(format="%(message)s", level=logging.INFO)   #level grado di importanza dei messaggi oltre il quale vengono visualizzati
 
 
 #########################
 # SERIAL_WORKER_SIGNALS #
 #########################
-class SerialWorkerSignals(QObject):
+class SerialWorkerSignals(QObject): #suggerimento dare nome del thread parallelo a cui si riferisce
     """!
     @brief Class that defines the signals available to a serialworker.
 
@@ -48,14 +48,14 @@ class SerialWorkerSignals(QObject):
             str --> port name
             int --> macro representing the state (0 - error during opening, 1 - success)
     """
-    device_port = pyqtSignal(str)
-    status = pyqtSignal(str, int)
+    device_port = pyqtSignal(str)   #porterà il nome della porta alla quale ho trovato un device connesso
+    status = pyqtSignal(str, int)   #info su nome della porta + 0 se errore/1 se tutto ok
 
 
 #################
 # SERIAL_WORKER #
 #################
-class SerialWorker(QRunnable):
+class SerialWorker(QRunnable):  #classe del thread parallelo
     """!
     @brief Main class for serial communication: handles connection with device.
     """
@@ -63,16 +63,16 @@ class SerialWorker(QRunnable):
         """!
         @brief Init worker.
         """
-        self.is_killed = False
+        self.is_killed = False  #variabile booleana controllo quando utente chiude er interrompere task qrunnable
         super().__init__()
         # init port, params and signals
         self.port = serial.Serial()
-        self.port_name = serial_port_name
+        self.port_name = serial_port_name   #dall'istanza del serial worker quando lo lancio vuole nome della porta
         self.baudrate = 9600 # hard coded but can be a global variable, or an input param
         self.signals = SerialWorkerSignals()
 
-    @pyqtSlot()
-    def run(self):
+    @pyqtSlot() #decoratore metodi da usare come slot in applicazioni multithread
+    def run(self):  #metodo run lanciato quando chiamato thread, quando arriva alla fine thread parallelo muore (poi può essere riusato grazie a threadpool) 
         """!
         @brief Estabilish connection with desired serial port.
         """
@@ -80,15 +80,15 @@ class SerialWorker(QRunnable):
 
         if not CONN_STATUS:
             try:
-                self.port = serial.Serial(port=self.port_name, baudrate=self.baudrate,
+                self.port = serial.Serial(port=self.port_name, baudrate=self.baudrate,   #operazione che apre la porta
                                         write_timeout=0, timeout=2)                
                 if self.port.is_open:
                     CONN_STATUS = True
-                    self.signals.status.emit(self.port_name, 1)
-                    time.sleep(0.01)     
-            except serial.SerialException:
+                    self.signals.status.emit(self.port_name, 1) #emit per mandare segnale, butta fuori nime della porta affinchè thread principale lo sappia
+                    time.sleep(0.01)     #blocca codice per 0.01 secondi, non bello ma necessario per far fisicamente allineare i dispositivi
+            except serial.SerialException:  #se non riesce ad aprire comunicazione non andata a buon fine logging print a terminale che c'è stato errore 
                 logging.info("Error with port {}.".format(self.port_name))
-                self.signals.status.emit(self.port_name, 0)
+                self.signals.status.emit(self.port_name, 0) #passo 0 perchè c'è stato errore
                 time.sleep(0.01)
 
     @pyqtSlot()
@@ -106,7 +106,7 @@ class SerialWorker(QRunnable):
     @pyqtSlot()
     def killed(self):
         """!
-        @brief Close the serial port before closing the app.
+        @brief Cose the serial port before closing the app.
         """
         global CONN_STATUS
         if self.is_killed and CONN_STATUS:
@@ -121,13 +121,13 @@ class SerialWorker(QRunnable):
 ###############
 # MAIN WINDOW #
 ###############
-class MainWindow(QMainWindow):
+class MainWindow(QMainWindow):  #generiamo interfaccia
     def __init__(self):
         """!
         @brief Init MainWindow.
         """
         # define worker
-        self.serial_worker = SerialWorker(None)
+        self.serial_worker = SerialWorker(None) #inizializziamo vuoto thread parallelo
 
         super(MainWindow, self).__init__()
 
@@ -138,10 +138,10 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(width, height)
 
         # create thread handler
-        self.threadpool = QThreadPool()
+        self.threadpool = QThreadPool() #contenitore dove vivranno thread che io devo creare
 
         self.connected = CONN_STATUS
-        self.serialscan()
+        self.serialscan()   #funzione utente che fa scan delle porte seriali per vedere quali sono attive
         self.initUI()
 
 
@@ -170,18 +170,18 @@ class MainWindow(QMainWindow):
         """
         # create the combo box to host port list
         self.port_text = ""
-        self.com_list_widget = QComboBox()
-        self.com_list_widget.currentTextChanged.connect(self.port_changed)
+        self.com_list_widget = QComboBox()  #crea menù a tendina inizialmente vuoto e pulsante
+        self.com_list_widget.currentTextChanged.connect(self.port_changed)  #segnale cambio selezione menù a tendina
         
         # create the connection button
         self.conn_btn = QPushButton(
-            text=("Connect to port {}".format(self.port_text)), 
-            checkable=True,
-            toggled=self.on_toggle
+            text=("Connect to port {}".format(self.port_text)),     #testo che dipende da testo visualizzato su menù a tendina
+            checkable=True, #pulsante non è soltanto clickable ma ha uno stato (premuto o non premuto)
+            toggled=self.on_toggle #prima avevamo clicked, ora toggle generato ogni volta il pulsante cambia stato (premuto o rilasciato)
         )
 
         # acquire list of serial ports and add it to the combo box
-        serial_ports = [
+        serial_ports = [    #lista delle porte con ciclo fro all'interno, nomi variabile p che fa lo scan delle porte
                 p.name
                 for p in serial.tools.list_ports.comports()
             ]
@@ -199,23 +199,23 @@ class MainWindow(QMainWindow):
         self.conn_btn.setText("Connect to port {}".format(self.port_text))
 
     @pyqtSlot(bool)
-    def on_toggle(self, checked):
+    def on_toggle(self, checked):   #toggle info in più sullo stato se è prmeuto o non premuto variaible booleana checked
         """!
         @brief Allow connection and disconnection from selected serial port.
         """
         if checked:
             # setup reading worker
-            self.serial_worker = SerialWorker(self.port_text) # needs to be re defined
+            self.serial_worker = SerialWorker(self.port_text) # needs to be re defined #creando l'istanza si definisce il thread parallelo
             # connect worker signals to functions
-            self.serial_worker.signals.status.connect(self.check_serialport_status)
+            self.serial_worker.signals.status.connect(self.check_serialport_status) #funzioni che utilizzerò come slot
             self.serial_worker.signals.device_port.connect(self.connected_device)
             # execute the worker
-            self.threadpool.start(self.serial_worker)
+            self.threadpool.start(self.serial_worker)   #lancio il thread parallelo, start lancia automaticamente il metodo run
         else:
             # kill thread
             self.serial_worker.is_killed = True
             self.serial_worker.killed()
-            self.com_list_widget.setDisabled(False) # enable the possibility to change port
+            self.com_list_widget.setDisabled(False) # enable the possibility to change port, riabilito menù a tendina
             self.conn_btn.setText(
                 "Connect to port {}".format(self.port_text)
             )
@@ -229,10 +229,11 @@ class MainWindow(QMainWindow):
             - 1  --> Serial port opened correctly
         """
         if status == 0:
-            self.conn_btn.setChecked(False)
+            self.conn_btn.setChecked(False) #non riuscito, non cambio stato e testo del pulsante
         elif status == 1:
             # enable all the widgets on the interface
             self.com_list_widget.setDisabled(True) # disable the possibility to change COM port when already connected
+            #IMPORTANTE! tutti questi aspetti per evitare confusione per l'utente, i due widgets sono interconnessi
             self.conn_btn.setText(
                 "Disconnect from port {}".format(port_name)
             )
