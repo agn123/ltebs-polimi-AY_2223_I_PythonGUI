@@ -45,17 +45,25 @@ class MainWindow(QMainWindow):
         # Define buttons
         self.clear_btn = QPushButton(
             text="Clear",
-            clicked=self.graphWidget.clear # .clear() is a method of the PlotWidget class
+            clicked=self.graphWidget.clear # .clear() is a method of the PlotWidget class già implementato
         )
         self.draw_btn = QPushButton(
             text="Draw",
-            clicked=self.draw
+            clicked=self.draw   #metodo che dovremo definire noi almeno in parte
         )
+        #terzo bottone per aggiungere dato al grafico
+        self.add_btn = QPushButton(
+            text = "Add data",
+            clicked = self.add_data         #gestire il segnale accoppiandolo con uno slot (metodo)
+        )
+
+
 
         # layout
         button_hlay = QHBoxLayout()
         button_hlay.addWidget(self.clear_btn)
         button_hlay.addWidget(self.draw_btn)
+        button_hlay.addWidget(self.add_btn)
         vlay = QVBoxLayout()
         vlay.addLayout(button_hlay)
         vlay.addWidget(self.graphWidget)
@@ -97,10 +105,18 @@ class MainWindow(QMainWindow):
         """!
         @brief Draw graph.
         """
-        pen = pg.mkPen(color=color)
+        pen = pg.mkPen(color=color) #definire riga di colore
         line = graph.plot(x, y, name=curve_name, pen=pen)
-        return line
+        return line     #linea che collega punti x e y èer aggiornare grafico basta aggiungere dati nella variabile linea, non serve ridisegnare grafico
 
+    def add_data(self):
+        self.hour.append(11)
+        self.temperature1.append(41)
+        self.temperature2.append(34)
+        
+        #update plot by valling the existing line
+        self.temp1line.setData(x=self.hour, y=self.temperature1)
+        self.temp2line.setData(x=self.hour, y=self.temperature2)
     
 #############
 #  RUN APP  #
